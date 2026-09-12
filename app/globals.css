@@ -11,12 +11,16 @@ body {
 .sidebar {
   display: none;
 }
-.brandBlock { padding: 6px 20px 18px; border-bottom: 1px solid rgba(255,255,255,0.15); margin-bottom: 10px; }
-.brandLogoBox {
-  background: #fff; border-radius: 8px; padding: 10px 14px; display: block; width: 100%; box-sizing: border-box;
+.brandBlock { padding: 14px 20px 18px; border-bottom: 1px solid rgba(255,255,255,0.15); margin-bottom: 10px; }
+.brandLogoImg {
+  display: block; width: 100%; height: auto;
+  /* Ảnh gốc: nền trắng đặc, chữ đen (không có kênh alpha). Lật màu (invert)
+     rồi hoà bằng chế độ "screen" lên nền navy phía sau: vùng nền trắng ->
+     đen sau invert -> screen(đen, nền) = nền (coi như trong suốt); vùng
+     chữ đen -> trắng sau invert -> hiện trắng rõ trên nền navy. */
+  filter: invert(1);
+  mix-blend-mode: screen;
 }
-.brandLogoImg { display: block; width: 100%; height: auto; }
-.brandSub { font-size: 11px; color: #cfe0ff; margin-top: 8px; letter-spacing: 0.02em; }
 .navItem {
   display: flex; align-items: center; gap: 10px; padding: 12px 20px;
   color: #cfe0ff; text-decoration: none; font-size: 14px; font-weight: 600;

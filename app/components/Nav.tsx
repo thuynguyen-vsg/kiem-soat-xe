@@ -15,10 +15,7 @@ function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
   return (
     <>
       <div className="brandBlock">
-        <div className="brandLogoBox">
-          <img src="/volvo-logo.jpg" alt="Volvo" className="brandLogoImg" />
-        </div>
-        <div className="brandSub">Kiểm Soát Xe Ra Vào</div>
+        <img src="/volvo-logo.jpg" alt="Volvo" className="brandLogoImg" />
       </div>
       {NAV_ITEMS.map((item) => (
         <Link
