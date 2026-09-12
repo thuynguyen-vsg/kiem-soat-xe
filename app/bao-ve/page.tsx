@@ -46,6 +46,7 @@ export default function BaoVePage() {
   const [addNoiDung, setAddNoiDung] = useState("");
   const [addLoai, setAddLoai] = useState("vang_lai");
   const [addGioVao, setAddGioVao] = useState("");
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
 
   const showToast = (msg: string) => {
     setToast(msg);
@@ -68,6 +69,7 @@ export default function BaoVePage() {
       return;
     }
     setRows((data as unknown as Record[]) || []);
+    setLastUpdated(new Date());
   }, []);
 
   useEffect(() => {
@@ -185,7 +187,9 @@ export default function BaoVePage() {
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
-        <div className="meta">{displayRows.length} xe • cập nhật {new Date().toLocaleTimeString("vi-VN")}</div>
+        <div className="meta">
+          {displayRows.length} xe • cập nhật {lastUpdated ? lastUpdated.toLocaleTimeString("vi-VN") : "—"}
+        </div>
       </div>
 
       <div className="list">
