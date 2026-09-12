@@ -1,0 +1,90 @@
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  font-family: -apple-system, Roboto, Arial, sans-serif;
+  background: #f2f2f2;
+  color: #222;
+}
+.header {
+  background: #0b3d91;
+  color: #fff;
+  padding: calc(14px + env(safe-area-inset-top)) 16px 14px;
+  position: sticky;
+  top: 0;
+  z-index: 5;
+}
+.header h1 { margin: 0 0 8px 0; font-size: 18px; }
+.searchBox {
+  width: 100%;
+  padding: 12px 14px;
+  font-size: 18px;
+  border: none;
+  border-radius: 10px;
+  outline: none;
+}
+.meta { font-size: 13px; opacity: 0.85; margin-top: 6px; }
+.list { padding: 10px; }
+.card {
+  background: #fff;
+  border-radius: 12px;
+  padding: 14px 16px;
+  margin-bottom: 10px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+  border-left: 10px solid #999;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+}
+.card.ok { border-left-color: #2e7d32; }
+.card.block { border-left-color: #c62828; }
+.card.done { border-left-color: #757575; opacity: 0.7; }
+.bienso { font-size: 22px; font-weight: 700; letter-spacing: 1px; }
+.noidung { font-size: 13px; color: #666; margin-top: 2px; }
+.cvdv { font-size: 12px; color: #0b3d91; margin-top: 2px; font-weight: 600; }
+.giohen { font-size: 12px; color: #999; margin-top: 2px; }
+.badge { font-size: 13px; font-weight: 700; padding: 6px 10px; border-radius: 999px; white-space: nowrap; margin-left: 8px; }
+.badge.ok { background: #e8f5e9; color: #2e7d32; }
+.badge.block { background: #ffebee; color: #c62828; }
+.badge.done { background: #eeeeee; color: #616161; }
+
+.overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.5);
+  display: flex; align-items: flex-end; justify-content: center; z-index: 10;
+}
+.sheet {
+  background: #fff; width: 100%; max-width: 480px; border-radius: 18px 18px 0 0;
+  padding: 20px 20px calc(20px + env(safe-area-inset-bottom)); text-align: center;
+  max-height: 88vh; overflow-y: auto;
+}
+.bigplate { font-size: 30px; font-weight: 800; margin-bottom: 4px; }
+.subinfo { font-size: 14px; color: #666; margin-bottom: 4px; }
+.statusBox { padding: 16px; border-radius: 12px; font-size: 16px; font-weight: 700; margin-bottom: 14px; }
+.statusBox.ok { background: #e8f5e9; color: #2e7d32; }
+.statusBox.block { background: #ffebee; color: #c62828; }
+.statusBox.done { background: #eeeeee; color: #424242; }
+.fieldLabel { text-align: left; font-size: 13px; color: #666; margin: 10px 0 4px 2px; font-weight: 600; }
+.textInput {
+  width: 100%; padding: 12px 14px; font-size: 16px; border: 1px solid #ccc;
+  border-radius: 10px; margin-bottom: 10px; font-family: inherit;
+}
+button.action {
+  width: 100%; padding: 16px; font-size: 17px; font-weight: 700; border: none;
+  border-radius: 12px; color: #fff; background: #2e7d32; margin-bottom: 10px;
+}
+button.action.secondary { background: #ef6c00; }
+button.action:disabled { background: #bdbdbd; }
+button.close { width: 100%; padding: 14px; font-size: 15px; border: none; border-radius: 12px; background: #eee; color: #333; }
+
+.fabAdd {
+  position: fixed; right: 18px; bottom: calc(22px + env(safe-area-inset-bottom));
+  width: 60px; height: 60px; border-radius: 50%;
+  background: #0b3d91; color: #fff; font-size: 30px; border: none;
+  box-shadow: 0 3px 8px rgba(0,0,0,0.3); z-index: 8; line-height: 60px;
+}
+.toast {
+  position: fixed; bottom: calc(20px + env(safe-area-inset-bottom)); left: 50%;
+  transform: translateX(-50%);
+  background: #222; color: #fff; padding: 12px 18px; border-radius: 10px;
+  font-size: 14px; z-index: 20; max-width: 90vw; text-align: center;
+}
