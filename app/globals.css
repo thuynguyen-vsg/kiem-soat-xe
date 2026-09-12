@@ -5,6 +5,45 @@ body {
   background: #f2f2f2;
   color: #222;
 }
+.appShell { display: flex; align-items: flex-start; }
+.mainArea { flex: 1; min-width: 0; }
+
+.sidebar {
+  display: none;
+}
+.brand { padding: 4px 20px 18px; font-weight: 800; font-size: 15px; color: #fff; }
+.navItem {
+  display: flex; align-items: center; gap: 10px; padding: 12px 20px;
+  color: #cfe0ff; text-decoration: none; font-size: 14px; font-weight: 600;
+}
+.navItem.active { background: rgba(255,255,255,0.14); color: #fff; box-shadow: inset 3px 0 0 #fff; }
+.navItem:hover { background: rgba(255,255,255,0.08); }
+
+@media (min-width: 860px) {
+  .sidebar {
+    display: block; width: 230px; flex-shrink: 0;
+    background: #0b3d91; position: sticky; top: 0; height: 100vh;
+    padding: 20px 0; overflow-y: auto;
+  }
+  .navToggle { display: none; }
+}
+
+.navToggle {
+  background: rgba(255,255,255,0.15); border: none; color: #fff; width: 34px; height: 34px;
+  border-radius: 8px; font-size: 16px; flex-shrink: 0; line-height: 1;
+}
+.navDrawerOverlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 30;
+}
+.navDrawer {
+  position: fixed; top: 0; left: 0; bottom: 0; width: 78vw; max-width: 280px;
+  background: #0b3d91; z-index: 31; padding-top: calc(20px + env(safe-area-inset-top));
+  padding-bottom: env(safe-area-inset-bottom); overflow-y: auto;
+  box-shadow: 2px 0 16px rgba(0,0,0,0.35);
+}
+
+.headerTop { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+
 .header {
   background: #0b3d91;
   color: #fff;
@@ -13,7 +52,7 @@ body {
   top: 0;
   z-index: 5;
 }
-.header h1 { margin: 0 0 8px 0; font-size: 18px; }
+.header h1 { margin: 0; font-size: 18px; }
 .searchBox {
   width: 100%;
   padding: 12px 14px;
@@ -81,13 +120,6 @@ button.close { width: 100%; padding: 14px; font-size: 15px; border: none; border
   width: 60px; height: 60px; border-radius: 50%;
   background: #0b3d91; color: #fff; font-size: 30px; border: none;
   box-shadow: 0 3px 8px rgba(0,0,0,0.3); z-index: 8; line-height: 60px;
-}
-.roleSwitch {
-  text-align: center; padding: 24px 16px calc(90px + env(safe-area-inset-bottom));
-}
-.roleSwitch a {
-  color: #0b3d91; font-size: 14px; font-weight: 600; text-decoration: none;
-  border-bottom: 1px dashed #0b3d91; padding-bottom: 2px;
 }
 .toast {
   position: fixed; bottom: calc(20px + env(safe-area-inset-bottom)); left: 50%;

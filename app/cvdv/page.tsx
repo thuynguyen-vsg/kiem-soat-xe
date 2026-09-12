@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import Link from "next/link";
 import { supabase } from "@/lib/supabase";
+import { SidebarNav, NavToggle, NavDrawer } from "@/app/components/Nav";
 
 type HenRecord = {
   id: string;
@@ -41,6 +41,7 @@ export default function CvdvPage() {
   const [gioHen, setGioHen] = useState(defaultDateTimeLocal());
   const [noiDung, setNoiDung] = useState("");
   const [cvdvId, setCvdvId] = useState("");
+  const [navOpen, setNavOpen] = useState(false);
 
   const showToast = (msg: string) => {
     setToast(msg);
@@ -93,9 +94,15 @@ export default function CvdvPage() {
   }
 
   return (
-    <div>
+    <div className="appShell">
+      <SidebarNav />
+      <NavDrawer open={navOpen} onClose={() => setNavOpen(false)} />
+      <div className="mainArea">
       <div className="header">
-        <h1>📅 CVDV — Đặt Lịch Hẹn</h1>
+        <div className="headerTop">
+          <NavToggle onOpen={() => setNavOpen(true)} />
+          <h1>📅 CVDV — Đặt Lịch Hẹn</h1>
+        </div>
         <div className="meta">Xe có hẹn sẽ tự hiện ở màn hình Bảo vệ khi tới giờ</div>
       </div>
 
@@ -143,9 +150,6 @@ export default function CvdvPage() {
       </div>
 
       {toast && <div className="toast">{toast}</div>}
-
-      <div className="roleSwitch">
-        <Link href="/bao-ve">🚗 Sang trang Bảo vệ — Kiểm soát xe ra/vào</Link>
       </div>
     </div>
   );

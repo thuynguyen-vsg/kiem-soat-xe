@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import Link from "next/link";
 import { supabase } from "@/lib/supabase";
+import { SidebarNav, NavToggle, NavDrawer } from "@/app/components/Nav";
 
 type Record = {
   id: string;
@@ -50,6 +50,7 @@ export default function BaoVePage() {
   const [addCvdvId, setAddCvdvId] = useState("");
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const [staffList, setStaffList] = useState<{ id: string; ho_ten: string }[]>([]);
+  const [navOpen, setNavOpen] = useState(false);
 
   const showToast = (msg: string) => {
     setToast(msg);
@@ -193,9 +194,15 @@ export default function BaoVePage() {
   }
 
   return (
-    <div>
+    <div className="appShell">
+      <SidebarNav />
+      <NavDrawer open={navOpen} onClose={() => setNavOpen(false)} />
+      <div className="mainArea">
       <div className="header">
-        <h1>🚗 Kiểm Soát Xe Ra Cổng</h1>
+        <div className="headerTop">
+          <NavToggle onOpen={() => setNavOpen(true)} />
+          <h1>🚗 Kiểm Soát Xe Ra Cổng</h1>
+        </div>
         <input
           className="searchBox"
           placeholder="Gõ biển số để tìm nhanh..."
@@ -302,9 +309,6 @@ export default function BaoVePage() {
       )}
 
       {toast && <div className="toast">{toast}</div>}
-
-      <div className="roleSwitch">
-        <Link href="/cvdv">📅 Sang trang CVDV — Đặt lịch hẹn</Link>
       </div>
     </div>
   );
