@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 export const NAV_ITEMS = [
   { href: "/bao-ve", label: "Bảo vệ", icon: "🚗" },
   { href: "/cvdv", label: "CVDV — Lịch hẹn", icon: "📅" },
+  { href: "/bao-cao", label: "Báo cáo", icon: "📊" },
 ];
 
 function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
