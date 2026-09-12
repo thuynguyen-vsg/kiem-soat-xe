@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
+import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 
 type Record = {
@@ -46,7 +47,9 @@ export default function BaoVePage() {
   const [addNoiDung, setAddNoiDung] = useState("");
   const [addLoai, setAddLoai] = useState("vang_lai");
   const [addGioVao, setAddGioVao] = useState("");
+  const [addCvdvId, setAddCvdvId] = useState("");
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+  const [staffList, setStaffList] = useState<{ id: string; ho_ten: string }[]>([]);
 
   const showToast = (msg: string) => {
     setToast(msg);
@@ -77,6 +80,16 @@ export default function BaoVePage() {
     const t = setInterval(loadData, 30000);
     return () => clearInterval(t);
   }, [loadData]);
+
+  useEffect(() => {
+    supabase
+      .from("staff")
+      .select("id, ho_ten")
+      .eq("vai_tro", "cvdv")
+      .eq("active", true)
+      .order("ho_ten")
+      .then(({ data }) => setStaffList(data || []));
+  }, []);
 
   const today0 = new Date();
   today0.setHours(0, 0, 0, 0);
@@ -167,6 +180,7 @@ export default function BaoVePage() {
       bien_so: addBienSo.toUpperCase().trim(),
       loai: addLoai,
       noi_dung: addNoiDung || null,
+      cvdv_id: addCvdvId || null,
       gio_vao: gioVao.toISOString(),
     });
     if (error) return showToast("❌ " + error.message);
@@ -174,6 +188,7 @@ export default function BaoVePage() {
     setAddOpen(false);
     setAddBienSo("");
     setAddNoiDung("");
+    setAddCvdvId("");
     loadData();
   }
 
@@ -273,6 +288,13 @@ export default function BaoVePage() {
             <input className="textInput" type="time" value={addGioVao} onChange={(e) => setAddGioVao(e.target.value)} />
             <div className="fieldLabel">Nội dung / Lý do</div>
             <input className="textInput" placeholder="VD: Kiểm tra đèn báo lỗi" value={addNoiDung} onChange={(e) => setAddNoiDung(e.target.value)} />
+            <div className="fieldLabel">CVDV phụ trách (nếu có)</div>
+            <select className="textInput" value={addCvdvId} onChange={(e) => setAddCvdvId(e.target.value)}>
+              <option value="">— Chưa rõ / chưa phân công —</option>
+              {staffList.map((s) => (
+                <option key={s.id} value={s.id}>{s.ho_ten}</option>
+              ))}
+            </select>
             <button className="action" onClick={submitAddCar}>➕ THÊM VÀO DANH SÁCH</button>
             <button className="close" onClick={() => setAddOpen(false)}>Hủy</button>
           </div>
@@ -280,6 +302,10 @@ export default function BaoVePage() {
       )}
 
       {toast && <div className="toast">{toast}</div>}
+
+      <div className="roleSwitch">
+        <Link href="/cvdv">📅 Sang trang CVDV — Đặt lịch hẹn</Link>
+      </div>
     </div>
   );
 }
