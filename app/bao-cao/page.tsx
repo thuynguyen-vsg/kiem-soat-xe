@@ -243,7 +243,11 @@ export default function BaoCaoPage() {
               </div>
             </div>
 
-            {tonByDate.length > 0 && (
+            {tonByDate.length === 0 ? (
+              <div style={{ color: "#2e7d32", fontWeight: 600, fontSize: 14, marginTop: 8 }}>
+                ✅ Không có xe nào tồn quá hạn chưa ra cổng.
+              </div>
+            ) : (
               <>
                 <div className="fieldLabel">Chi tiết xe tồn theo ngày (ngày cũ nhất lên trước)</div>
                 {tonByDate.map(([k, list]) => (

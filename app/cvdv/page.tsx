@@ -14,14 +14,13 @@ type HenRecord = {
   gio_vao: string | null;
 };
 
-type PasteItem = {
-  bien_so: string;
-  gio_hen_raw: string;
-  noi_dung: string;
-  cvdv_ten: string;
-  cvdv_id: string | null;
-  matched: boolean;
-};
+type GridRow = { gioHen: string; bienSo: string; noiDung: string; cvdvId: string };
+function emptyGridRow(): GridRow {
+  return { gioHen: "", bienSo: "", noiDung: "", cvdvId: "" };
+}
+function makeGridRows(n: number): GridRow[] {
+  return Array.from({ length: n }, emptyGridRow);
+}
 
 function tomorrowDateStr() {
   const d = new Date();
@@ -64,9 +63,8 @@ export default function CvdvPage() {
   const [cvdvId, setCvdvId] = useState("");
   const [navOpen, setNavOpen] = useState(false);
 
-  const [pasteDate, setPasteDate] = useState(tomorrowDateStr());
-  const [pasteText, setPasteText] = useState("");
-  const [pastePreview, setPastePreview] = useState<PasteItem[]>([]);
+  const [gridDate, setGridDate] = useState(tomorrowDateStr());
+  const [gridRows, setGridRows] = useState<GridRow[]>(() => makeGridRows(6));
 
   const showToast = (msg: string) => {
     setToast(msg);
@@ -118,52 +116,59 @@ export default function CvdvPage() {
     loadHens();
   }
 
-  function parsePaste() {
-    const lines = pasteText.split("\n").map((l) => l.trim()).filter(Boolean);
-    const items: PasteItem[] = [];
-    for (const line of lines) {
-      const cols = line.split("\t").map((c) => c.trim());
-      let gioHenRaw = "", bienSo = "", noiDung = "", cvdvTen = "";
-      if (cols.length >= 5) {
-        // có cột STT ở đầu (dán cả cột A) -> bỏ qua
-        [, gioHenRaw, bienSo, noiDung, cvdvTen] = cols;
-      } else if (cols.length === 4) {
-        [gioHenRaw, bienSo, noiDung, cvdvTen] = cols;
-      } else {
-        continue;
-      }
-      if (!/^\d{1,2}:\d{2}$/.test(gioHenRaw)) continue; // bỏ dòng tiêu đề / không hợp lệ
-      if (!bienSo) continue;
-      const staff = staffList.find(
-        (s) => s.ho_ten.trim().toLowerCase() === cvdvTen.trim().toLowerCase()
-      );
-      items.push({
-        bien_so: bienSo.toUpperCase(),
-        gio_hen_raw: gioHenRaw,
-        noi_dung: noiDung,
-        cvdv_ten: cvdvTen,
-        cvdv_id: staff ? staff.id : null,
-        matched: !!staff || !cvdvTen,
-      });
-    }
-    if (items.length === 0) return showToast("❌ Không đọc được dòng nào hợp lệ. Kiểm tra lại dữ liệu dán vào.");
-    setPastePreview(items);
+  function updateCell(idx: number, field: keyof GridRow, value: string) {
+    setGridRows((prev) => prev.map((r, i) => (i === idx ? { ...r, [field]: value } : r)));
+  }
+  function addGridRow() {
+    setGridRows((prev) => [...prev, emptyGridRow()]);
+  }
+  function removeGridRow(idx: number) {
+    setGridRows((prev) => prev.filter((_, i) => i !== idx));
   }
 
-  async function submitBulk() {
-    if (pastePreview.length === 0) return;
-    const payload = pastePreview.map((item) => ({
-      bien_so: item.bien_so,
+  // Dán cả khối (copy từ Google Sheet) vào ô "Giờ" của 1 dòng -> tự điền
+  // dòng đó + các dòng tiếp theo (Giờ, Biển số, Nội dung, CVDV theo tên).
+  function handleGridPaste(e: React.ClipboardEvent<HTMLInputElement>, startIdx: number) {
+    const text = e.clipboardData.getData("text");
+    if (!text.includes("\t") && !text.includes("\n")) return; // dán 1 giá trị -> để trình duyệt tự xử lý
+    e.preventDefault();
+    const lines = text.split("\n").map((l) => l.replace(/\r$/, "")).filter((l) => l.trim().length > 0);
+    setGridRows((prev) => {
+      const next = [...prev];
+      lines.forEach((line, li) => {
+        const cols = line.split("\t").map((c) => c.trim());
+        let gioHen = "", bienSo = "", noiDung = "", cvdvTen = "";
+        if (cols.length >= 5) [, gioHen, bienSo, noiDung, cvdvTen] = cols; // có cột STT
+        else [gioHen, bienSo, noiDung, cvdvTen] = cols;
+        if (!/^\d{1,2}:\d{2}$/.test(gioHen)) return; // bỏ dòng tiêu đề / không hợp lệ
+        const staff = staffList.find((s) => s.ho_ten.trim().toLowerCase() === cvdvTen.trim().toLowerCase());
+        const targetIdx = startIdx + li;
+        while (next.length <= targetIdx) next.push(emptyGridRow());
+        next[targetIdx] = {
+          gioHen,
+          bienSo: bienSo.toUpperCase(),
+          noiDung,
+          cvdvId: staff ? staff.id : "",
+        };
+      });
+      return next;
+    });
+  }
+
+  async function submitGrid() {
+    const valid = gridRows.filter((r) => r.bienSo.trim() && r.gioHen);
+    if (valid.length === 0) return showToast("❌ Chưa có dòng nào hợp lệ (cần ít nhất Giờ hẹn + Biển số).");
+    const payload = valid.map((r) => ({
+      bien_so: r.bienSo.toUpperCase().trim(),
       loai: "hen",
-      gio_hen: combineDateTime(pasteDate, item.gio_hen_raw),
-      noi_dung: item.noi_dung || null,
-      cvdv_id: item.cvdv_id,
+      gio_hen: combineDateTime(gridDate, r.gioHen),
+      noi_dung: r.noiDung || null,
+      cvdv_id: r.cvdvId || null,
     }));
     const { error } = await supabase.from("service_records").insert(payload);
     if (error) return showToast("❌ " + error.message);
     showToast(`✅ Đã lưu ${payload.length} lịch hẹn`);
-    setPasteText("");
-    setPastePreview([]);
+    setGridRows(makeGridRows(6));
     loadHens();
   }
 
@@ -203,54 +208,78 @@ export default function CvdvPage() {
         </div>
 
         <div className="card" style={{ display: "block", cursor: "default" }}>
-          <h3 style={{ marginTop: 0 }}>📋 Dán nhiều lịch hẹn (copy từ Google Sheet)</h3>
+          <h3 style={{ marginTop: 0 }}>📋 Nhập nhiều lịch hẹn (dạng bảng)</h3>
 
-          <div className="fieldLabel" style={{ marginTop: 0 }}>Ngày hẹn áp dụng cho các dòng dán bên dưới</div>
-          <input className="textInput" type="date" value={pasteDate} onChange={(e) => setPasteDate(e.target.value)} />
+          <div className="fieldLabel" style={{ marginTop: 0 }}>Ngày hẹn áp dụng cho tất cả các dòng bên dưới</div>
+          <input className="textInput" type="date" value={gridDate} onChange={(e) => setGridDate(e.target.value)} style={{ maxWidth: 220 }} />
 
           <div className="fieldLabel">
-            Dán dữ liệu (bôi đen 4 cột <b>Giờ Hẹn, Biển số, Nội dung, CVDV</b> trên Sheet rồi Ctrl+C, dán vào đây)
+            Gõ trực tiếp từng ô, hoặc copy 4 cột <b>Giờ Hẹn, Biển số, Nội dung, CVDV</b> từ Google Sheet rồi dán
+            (Ctrl+V) vào ô <b>Giờ</b> của 1 dòng bất kỳ — app tự điền các dòng tiếp theo, kể cả tự chọn đúng CVDV
+            nếu tên khớp danh sách.
           </div>
-          <textarea
-            className="textInput"
-            rows={5}
-            style={{ fontFamily: "monospace", fontSize: 13, resize: "vertical" }}
-            placeholder={"08:00\t51K08739\tPM90K\tĐào Đình Tính\n08:00\t51K01474\tPM70K\tLê Hồng Thông"}
-            value={pasteText}
-            onChange={(e) => setPasteText(e.target.value)}
-          />
-          <button className="action secondary" onClick={parsePaste}>🔍 Xem trước</button>
 
-          {pastePreview.length > 0 && (
-            <>
-              <div className="fieldLabel">
-                Xem trước ({pastePreview.length} dòng) — dòng nền cam ❓ là chưa khớp tên CVDV nào, kiểm tra kỹ trước khi lưu
-              </div>
-              <div style={{ maxHeight: 260, overflowY: "auto", textAlign: "left", border: "1px solid #eee", borderRadius: 10, marginBottom: 10 }}>
-                <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
-                  <thead>
-                    <tr style={{ background: "#f2f2f2" }}>
-                      <th style={{ padding: 6, textAlign: "left" }}>Biển số</th>
-                      <th style={{ padding: 6, textAlign: "left" }}>Giờ</th>
-                      <th style={{ padding: 6, textAlign: "left" }}>Nội dung</th>
-                      <th style={{ padding: 6, textAlign: "left" }}>CVDV</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {pastePreview.map((item, i) => (
-                      <tr key={i} style={{ borderTop: "1px solid #eee", background: item.matched ? "transparent" : "#fff3e0" }}>
-                        <td style={{ padding: 6, fontWeight: 700 }}>{item.bien_so}</td>
-                        <td style={{ padding: 6 }}>{item.gio_hen_raw}</td>
-                        <td style={{ padding: 6 }}>{item.noi_dung}</td>
-                        <td style={{ padding: 6 }}>{item.cvdv_ten}{!item.matched && item.cvdv_ten && " ❓"}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-              <button className="action" onClick={submitBulk}>✅ XÁC NHẬN &amp; LƯU {pastePreview.length} LỊCH HẸN</button>
-            </>
-          )}
+          <div style={{ overflowX: "auto" }}>
+            <table className="gridTable">
+              <thead>
+                <tr>
+                  <th style={{ width: 90 }}>Giờ</th>
+                  <th>Biển số</th>
+                  <th>Nội dung</th>
+                  <th style={{ width: 160 }}>CVDV</th>
+                  <th style={{ width: 30 }}></th>
+                </tr>
+              </thead>
+              <tbody>
+                {gridRows.map((row, i) => (
+                  <tr key={i}>
+                    <td>
+                      <input
+                        className="gridInput"
+                        type="time"
+                        value={row.gioHen}
+                        onChange={(e) => updateCell(i, "gioHen", e.target.value)}
+                        onPaste={(e) => handleGridPaste(e, i)}
+                      />
+                    </td>
+                    <td>
+                      <input
+                        className="gridInput"
+                        placeholder="51K12345"
+                        value={row.bienSo}
+                        onChange={(e) => updateCell(i, "bienSo", e.target.value)}
+                        onPaste={(e) => handleGridPaste(e, i)}
+                      />
+                    </td>
+                    <td>
+                      <input
+                        className="gridInput"
+                        placeholder="Nội dung"
+                        value={row.noiDung}
+                        onChange={(e) => updateCell(i, "noiDung", e.target.value)}
+                      />
+                    </td>
+                    <td>
+                      <select className="gridInput" value={row.cvdvId} onChange={(e) => updateCell(i, "cvdvId", e.target.value)}>
+                        <option value="">—</option>
+                        {staffList.map((s) => (
+                          <option key={s.id} value={s.id}>{s.ho_ten}</option>
+                        ))}
+                      </select>
+                    </td>
+                    <td>
+                      <button className="gridRemoveBtn" onClick={() => removeGridRow(i)} aria-label="Xoá dòng">✕</button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          <div style={{ display: "flex", gap: 10, marginTop: 12 }}>
+            <button className="action secondary" onClick={addGridRow} style={{ flex: 1 }}>+ Thêm dòng</button>
+            <button className="action" onClick={submitGrid} style={{ flex: 2 }}>✅ LƯU CÁC DÒNG HỢP LỆ</button>
+          </div>
         </div>
 
         <div className="fieldLabel" style={{ marginLeft: 6 }}>Lịch hẹn hôm nay & sắp tới</div>
