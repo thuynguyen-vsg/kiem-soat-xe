@@ -16,6 +16,7 @@ type Record = {
   km: number | null;
   so_phieu: string | null;
   gio_ra: string | null;
+  dai_ly: string | null;
   created_at: string;
 };
 
@@ -48,6 +49,7 @@ export default function BaoVePage() {
   const [addLoai, setAddLoai] = useState("vang_lai");
   const [addGioVao, setAddGioVao] = useState("");
   const [addCvdvId, setAddCvdvId] = useState("");
+  const [addDaiLy, setAddDaiLy] = useState("");
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const [staffList, setStaffList] = useState<{ id: string; ho_ten: string }[]>([]);
   const [navOpen, setNavOpen] = useState(false);
@@ -182,6 +184,7 @@ export default function BaoVePage() {
       loai: addLoai,
       noi_dung: addNoiDung || null,
       cvdv_id: addCvdvId || null,
+      dai_ly: addDaiLy || null,
       gio_vao: gioVao.toISOString(),
     });
     if (error) return showToast("❌ " + error.message);
@@ -190,6 +193,7 @@ export default function BaoVePage() {
     setAddBienSo("");
     setAddNoiDung("");
     setAddCvdvId("");
+    setAddDaiLy("");
     loadData();
   }
 
@@ -220,7 +224,10 @@ export default function BaoVePage() {
           return (
             <div key={r.id} className={"card " + cls} onClick={() => openDetail(r)}>
               <div>
-                <div className="bienso">{r.bien_so}</div>
+                <div className="bienso">
+                  {r.bien_so}
+                  {r.dai_ly && <span className="dailyTag">{r.dai_ly}</span>}
+                </div>
                 <div className="noidung">{r.noi_dung || ""}</div>
                 {r.cvdv?.ho_ten && <div className="cvdv">CVDV: {r.cvdv.ho_ten}</div>}
                 <div className="giohen">
@@ -301,6 +308,12 @@ export default function BaoVePage() {
               {staffList.map((s) => (
                 <option key={s.id} value={s.id}>{s.ho_ten}</option>
               ))}
+            </select>
+            <div className="fieldLabel">Đại lý</div>
+            <select className="textInput" value={addDaiLy} onChange={(e) => setAddDaiLy(e.target.value)}>
+              <option value="">— Chưa chọn —</option>
+              <option value="VSG">VSG</option>
+              <option value="VDS">VDS</option>
             </select>
             <button className="action" onClick={submitAddCar}>➕ THÊM VÀO DANH SÁCH</button>
             <button className="close" onClick={() => setAddOpen(false)}>Hủy</button>

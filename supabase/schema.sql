@@ -45,6 +45,8 @@ create table if not exists service_records (
 
   ly_do_doi_huy text,
 
+  dai_ly text check (dai_ly in ('VSG','VDS')), -- đại lý phụ trách xe này
+
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
@@ -54,10 +56,15 @@ create index if not exists idx_service_records_gio_hen on service_records (gio_h
 create index if not exists idx_service_records_chua_ra on service_records (gio_ra) where gio_ra is null;
 
 -- ---------- 4. Nhật ký thao tác (audit log) ----------
+-- on delete SET NULL (không phải cascade): khi 1 bản ghi service_records
+-- bị xoá, lịch sử thao tác của nó PHẢI được giữ lại (đây chính là mục
+-- đích của audit_log - tránh mất dấu vết khi xoá nhầm). gia_tri_cu lưu
+-- lại toàn bộ nội dung bản ghi tại thời điểm xoá/sửa nên vẫn xem được
+-- dù record_id đã null.
 create table if not exists audit_log (
   id uuid primary key default gen_random_uuid(),
-  record_id uuid references service_records(id) on delete cascade,
-  hanh_dong text not null,          -- vd: xac_nhan_vao, xac_nhan_phieu, xac_nhan_ra, sua_gio_ra
+  record_id uuid references service_records(id) on delete set null,
+  hanh_dong text not null,          -- vd: them_moi, sua, xoa, xac_nhan_vao, xac_nhan_phieu, xac_nhan_ra
   nguoi_thuc_hien uuid references staff(id),
   thoi_gian timestamptz not null default now(),
   gia_tri_cu jsonb,
@@ -95,9 +102,15 @@ create policy "anon_write_service_records" on service_records
   for insert with check (auth.role() in ('authenticated', 'anon'));
 create policy "anon_update_service_records" on service_records
   for update using (auth.role() in ('authenticated', 'anon'));
+create policy "anon_delete_service_records" on service_records
+  for delete using (auth.role() in ('authenticated', 'anon'));
 
 create policy "anon_read_staff" on staff
   for select using (auth.role() in ('authenticated', 'anon'));
+create policy "anon_write_staff" on staff
+  for insert with check (auth.role() in ('authenticated', 'anon'));
+create policy "anon_update_staff" on staff
+  for update using (auth.role() in ('authenticated', 'anon'));
 
 create policy "anon_read_audit" on audit_log
   for select using (auth.role() in ('authenticated', 'anon'));

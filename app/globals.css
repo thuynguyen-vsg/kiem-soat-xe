@@ -11,7 +11,12 @@ body {
 .sidebar {
   display: none;
 }
-.brand { padding: 4px 20px 18px; font-weight: 800; font-size: 15px; color: #fff; }
+.brandBlock { padding: 6px 20px 18px; border-bottom: 1px solid rgba(255,255,255,0.15); margin-bottom: 10px; }
+.brandLogoBox {
+  background: #fff; border-radius: 8px; padding: 10px 14px; display: block; width: 100%; box-sizing: border-box;
+}
+.brandLogoImg { display: block; width: 100%; height: auto; }
+.brandSub { font-size: 11px; color: #cfe0ff; margin-top: 8px; letter-spacing: 0.02em; }
 .navItem {
   display: flex; align-items: center; gap: 10px; padding: 12px 20px;
   color: #cfe0ff; text-decoration: none; font-size: 14px; font-weight: 600;
@@ -79,6 +84,11 @@ body {
 .card.block { border-left-color: #c62828; }
 .card.done { border-left-color: #757575; opacity: 0.7; }
 .bienso { font-size: 22px; font-weight: 700; letter-spacing: 1px; }
+.dailyTag {
+  display: inline-block; font-size: 11px; font-weight: 700; letter-spacing: 0.5px;
+  background: #0b3d91; color: #fff; padding: 2px 7px; border-radius: 6px;
+  margin-left: 8px; vertical-align: middle;
+}
 .noidung { font-size: 13px; color: #666; margin-top: 2px; }
 .cvdv { font-size: 12px; color: #0b3d91; margin-top: 2px; font-weight: 600; }
 .giohen { font-size: 12px; color: #999; margin-top: 2px; }

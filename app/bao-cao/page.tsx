@@ -11,6 +11,7 @@ type Rec = {
   gio_hen: string | null;
   gio_vao: string | null;
   gio_ra: string | null;
+  dai_ly: string | null;
   created_at: string;
   cvdv?: { ho_ten: string } | null;
 };
@@ -50,12 +51,13 @@ export default function BaoCaoPage() {
   const [loading, setLoading] = useState(true);
   const [navOpen, setNavOpen] = useState(false);
   const [selectedDate, setSelectedDate] = useState(() => new Date().toISOString().slice(0, 10));
+  const [daiLyFilter, setDaiLyFilter] = useState(""); // "" = cả 2 đại lý (không chọn)
 
   const load = useCallback(async () => {
     setLoading(true);
     const { data, error } = await supabase
       .from("service_records")
-      .select("id, bien_so, loai, gio_hen, gio_vao, gio_ra, created_at, cvdv:staff!cvdv_id(ho_ten)")
+      .select("id, bien_so, loai, gio_hen, gio_vao, gio_ra, dai_ly, created_at, cvdv:staff!cvdv_id(ho_ten)")
       .order("created_at", { ascending: false })
       .limit(5000);
     if (!error) setRows((data as unknown as Rec[]) || []);
@@ -66,20 +68,25 @@ export default function BaoCaoPage() {
     load();
   }, [load]);
 
+  const rowsFiltered = useMemo(
+    () => (daiLyFilter ? rows.filter((r) => r.dai_ly === daiLyFilter) : rows),
+    [rows, daiLyFilter]
+  );
+
   // ---------- 1. Xe hẹn trong ngày (theo ngày đang chọn) ----------
   const dayCounts = useMemo(() => {
     const c = emptyCounts();
-    for (const r of rows) {
+    for (const r of rowsFiltered) {
       if (dateKey(refDate(r)) === selectedDate) c[r.loai as keyof typeof c] = (c[r.loai as keyof typeof c] || 0) + 1;
     }
     return c;
-  }, [rows, selectedDate]);
+  }, [rowsFiltered, selectedDate]);
   const dayTotal = dayCounts.hen + dayCounts.vang_lai + dayCounts.giam_dinh;
 
   // ---------- 2. Báo cáo theo tháng ----------
   const monthRows = useMemo(() => {
     const map: Record<string, ReturnType<typeof emptyCounts>> = {};
-    for (const r of rows) {
+    for (const r of rowsFiltered) {
       const mk = monthKey(refDate(r));
       if (!map[mk]) map[mk] = emptyCounts();
       map[mk][r.loai as keyof ReturnType<typeof emptyCounts>] =
@@ -88,7 +95,7 @@ export default function BaoCaoPage() {
     return Object.entries(map)
       .sort((a, b) => (a[0] < b[0] ? 1 : -1)) // mới nhất trước
       .map(([mk, c]) => ({ mk, ...c, tong: c.hen + c.vang_lai + c.giam_dinh }));
-  }, [rows]);
+  }, [rowsFiltered]);
   const ytdTotal = useMemo(
     () =>
       monthRows.reduce(
@@ -106,7 +113,7 @@ export default function BaoCaoPage() {
   // ---------- 3. Xe tồn (chưa ra cổng) ----------
   const tonList = useMemo(() => {
     const now = new Date();
-    return rows
+    return rowsFiltered
       .filter((r) => !r.gio_ra && refDate(r).getTime() <= now.getTime()) // bỏ xe hẹn tương lai (chưa tới hạn)
       .map((r) => {
         const rd = refDate(r);
@@ -114,7 +121,7 @@ export default function BaoCaoPage() {
         return { ...r, refDate: rd, days };
       })
       .sort((a, b) => a.refDate.getTime() - b.refDate.getTime());
-  }, [rows]);
+  }, [rowsFiltered]);
 
   const tonBucket = useMemo(() => {
     const b = { le3: 0, tu4den7: 0, tren7: 0 };
@@ -146,10 +153,19 @@ export default function BaoCaoPage() {
             <NavToggle onOpen={() => setNavOpen(true)} />
             <h1>📊 Báo Cáo Kiểm Soát Xe Ra Vào</h1>
           </div>
-          <div className="meta">{loading ? "Đang tải..." : `${rows.length} bản ghi`}</div>
+          <div className="meta">{loading ? "Đang tải..." : `${rowsFiltered.length} bản ghi`}</div>
         </div>
 
         <div className="list">
+          <div className="card" style={{ display: "block", cursor: "default" }}>
+            <div className="fieldLabel" style={{ marginTop: 0 }}>Đại lý</div>
+            <select className="textInput" value={daiLyFilter} onChange={(e) => setDaiLyFilter(e.target.value)} style={{ maxWidth: 260, marginBottom: 0 }}>
+              <option value="">Cả 2 đại lý (không chọn)</option>
+              <option value="VSG">VSG</option>
+              <option value="VDS">VDS</option>
+            </select>
+          </div>
+
           {/* ---------- Section 1 ---------- */}
           <div className="card" style={{ display: "block", cursor: "default" }}>
             <h3 style={{ marginTop: 0 }}>1. Xe hẹn trong ngày</h3>

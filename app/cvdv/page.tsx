@@ -12,11 +12,12 @@ type HenRecord = {
   cvdv_id: string | null;
   cvdv?: { ho_ten: string } | null;
   gio_vao: string | null;
+  dai_ly: string | null;
 };
 
-type GridRow = { gioHen: string; bienSo: string; noiDung: string; cvdvId: string };
+type GridRow = { gioHen: string; bienSo: string; noiDung: string; cvdvId: string; daiLy: string };
 function emptyGridRow(): GridRow {
-  return { gioHen: "", bienSo: "", noiDung: "", cvdvId: "" };
+  return { gioHen: "", bienSo: "", noiDung: "", cvdvId: "", daiLy: "" };
 }
 function makeGridRows(n: number): GridRow[] {
   return Array.from({ length: n }, emptyGridRow);
@@ -61,6 +62,7 @@ export default function CvdvPage() {
   const [gioHen, setGioHen] = useState(defaultDateTimeLocal());
   const [noiDung, setNoiDung] = useState("");
   const [cvdvId, setCvdvId] = useState("");
+  const [daiLy, setDaiLy] = useState("");
   const [navOpen, setNavOpen] = useState(false);
 
   const [gridDate, setGridDate] = useState(tomorrowDateStr());
@@ -76,7 +78,7 @@ export default function CvdvPage() {
     start.setHours(0, 0, 0, 0);
     const { data, error } = await supabase
       .from("service_records")
-      .select("id, bien_so, gio_hen, noi_dung, cvdv_id, gio_vao, cvdv:staff!cvdv_id(ho_ten)")
+      .select("id, bien_so, gio_hen, noi_dung, cvdv_id, gio_vao, dai_ly, cvdv:staff!cvdv_id(ho_ten)")
       .eq("loai", "hen")
       .gte("gio_hen", start.toISOString())
       .order("gio_hen", { ascending: true });
@@ -107,12 +109,14 @@ export default function CvdvPage() {
       gio_hen: new Date(gioHen).toISOString(),
       noi_dung: noiDung || null,
       cvdv_id: cvdvId || null,
+      dai_ly: daiLy || null,
     });
     if (error) return showToast("❌ " + error.message);
     showToast("✅ Đã đặt hẹn xe " + bienSo.toUpperCase());
     setBienSo("");
     setNoiDung("");
     setGioHen(defaultDateTimeLocal());
+    setDaiLy("");
     loadHens();
   }
 
@@ -137,11 +141,14 @@ export default function CvdvPage() {
       const next = [...prev];
       lines.forEach((line, li) => {
         const cols = line.split("\t").map((c) => c.trim());
-        let gioHen = "", bienSo = "", noiDung = "", cvdvTen = "";
-        if (cols.length >= 5) [, gioHen, bienSo, noiDung, cvdvTen] = cols; // có cột STT
-        else [gioHen, bienSo, noiDung, cvdvTen] = cols;
+        let gioHen = "", bienSo = "", noiDung = "", cvdvTen = "", daiLyRaw = "";
+        if (cols.length >= 6) [, gioHen, bienSo, noiDung, cvdvTen, daiLyRaw] = cols; // có cột STT + đại lý
+        else if (cols.length === 5) [gioHen, bienSo, noiDung, cvdvTen, daiLyRaw] = cols;
+        else if (cols.length === 4) [gioHen, bienSo, noiDung, cvdvTen] = cols;
+        else return;
         if (!/^\d{1,2}:\d{2}$/.test(gioHen)) return; // bỏ dòng tiêu đề / không hợp lệ
         const staff = staffList.find((s) => s.ho_ten.trim().toLowerCase() === cvdvTen.trim().toLowerCase());
+        const daiLyMatch = daiLyRaw.trim().toUpperCase();
         const targetIdx = startIdx + li;
         while (next.length <= targetIdx) next.push(emptyGridRow());
         next[targetIdx] = {
@@ -149,6 +156,7 @@ export default function CvdvPage() {
           bienSo: bienSo.toUpperCase(),
           noiDung,
           cvdvId: staff ? staff.id : "",
+          daiLy: daiLyMatch === "VSG" || daiLyMatch === "VDS" ? daiLyMatch : "",
         };
       });
       return next;
@@ -164,6 +172,7 @@ export default function CvdvPage() {
       gio_hen: combineDateTime(gridDate, r.gioHen),
       noi_dung: r.noiDung || null,
       cvdv_id: r.cvdvId || null,
+      dai_ly: r.daiLy || null,
     }));
     const { error } = await supabase.from("service_records").insert(payload);
     if (error) return showToast("❌ " + error.message);
@@ -204,6 +213,13 @@ export default function CvdvPage() {
           <div className="fieldLabel">Nội dung / Lý do</div>
           <input className="textInput" placeholder="VD: Bảo dưỡng định kỳ 10.000km" value={noiDung} onChange={(e) => setNoiDung(e.target.value)} />
 
+          <div className="fieldLabel">Đại lý</div>
+          <select className="textInput" value={daiLy} onChange={(e) => setDaiLy(e.target.value)}>
+            <option value="">— Chưa chọn —</option>
+            <option value="VSG">VSG</option>
+            <option value="VDS">VDS</option>
+          </select>
+
           <button className="action" onClick={submitHen}>📅 ĐẶT LỊCH HẸN</button>
         </div>
 
@@ -227,6 +243,7 @@ export default function CvdvPage() {
                   <th>Biển số</th>
                   <th>Nội dung</th>
                   <th style={{ width: 160 }}>CVDV</th>
+                  <th style={{ width: 80 }}>Đại lý</th>
                   <th style={{ width: 30 }}></th>
                 </tr>
               </thead>
@@ -268,6 +285,13 @@ export default function CvdvPage() {
                       </select>
                     </td>
                     <td>
+                      <select className="gridInput" value={row.daiLy} onChange={(e) => updateCell(i, "daiLy", e.target.value)}>
+                        <option value="">—</option>
+                        <option value="VSG">VSG</option>
+                        <option value="VDS">VDS</option>
+                      </select>
+                    </td>
+                    <td>
                       <button className="gridRemoveBtn" onClick={() => removeGridRow(i)} aria-label="Xoá dòng">✕</button>
                     </td>
                   </tr>
@@ -291,7 +315,10 @@ export default function CvdvPage() {
         {hens.map((h) => (
           <div key={h.id} className={"card " + (h.gio_vao ? "done" : "ok")} style={{ cursor: "default" }}>
             <div>
-              <div className="bienso">{h.bien_so}</div>
+              <div className="bienso">
+                {h.bien_so}
+                {h.dai_ly && <span className="dailyTag">{h.dai_ly}</span>}
+              </div>
               <div className="noidung">{h.noi_dung || ""}</div>
               {h.cvdv?.ho_ten && <div className="cvdv">CVDV: {h.cvdv.ho_ten}</div>}
               <div className="giohen">Hẹn: {fmtDateTime(h.gio_hen)}</div>

@@ -7,13 +7,19 @@ export const NAV_ITEMS = [
   { href: "/bao-ve", label: "Bảo vệ", icon: "🚗" },
   { href: "/cvdv", label: "CVDV — Lịch hẹn", icon: "📅" },
   { href: "/bao-cao", label: "Báo cáo", icon: "📊" },
+  { href: "/quan-tri", label: "Quản trị", icon: "🛠️" },
 ];
 
 function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
   const pathname = usePathname();
   return (
     <>
-      <div className="brand">🅿️ Xe Ra Vào</div>
+      <div className="brandBlock">
+        <div className="brandLogoBox">
+          <img src="/volvo-logo.jpg" alt="Volvo" className="brandLogoImg" />
+        </div>
+        <div className="brandSub">Kiểm Soát Xe Ra Vào</div>
+      </div>
       {NAV_ITEMS.map((item) => (
         <Link
           key={item.href}
