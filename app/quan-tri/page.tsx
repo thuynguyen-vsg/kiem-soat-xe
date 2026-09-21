@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/lib/supabase";
+import { friendlyError } from "@/lib/errors";
 import { SidebarNav, NavToggle, NavDrawer } from "@/app/components/Nav";
 
 type Rec = {
@@ -120,7 +121,7 @@ export default function QuanTriPage() {
       .select("*, cvdv:staff!cvdv_id(ho_ten)")
       .order("created_at", { ascending: false })
       .limit(300);
-    if (error) return showToast("❌ Lỗi tải danh sách: " + error.message);
+    if (error) return showToast("❌ Lỗi tải danh sách: " + friendlyError(error.message));
     setRows((data as unknown as Rec[]) || []);
   }, []);
 

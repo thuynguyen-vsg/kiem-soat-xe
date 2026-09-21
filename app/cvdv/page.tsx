@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/lib/supabase";
+import { friendlyError } from "@/lib/errors";
 import { SidebarNav, NavToggle, NavDrawer } from "@/app/components/Nav";
 
 type HenRecord = {
@@ -83,7 +84,7 @@ export default function CvdvPage() {
       .gte("gio_hen", start.toISOString())
       .order("gio_hen", { ascending: true });
     if (error) {
-      showToast("❌ Lỗi tải danh sách: " + error.message);
+      showToast("❌ Lỗi tải danh sách: " + friendlyError(error.message));
       return;
     }
     setHens((data as unknown as HenRecord[]) || []);

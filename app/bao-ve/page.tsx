@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/lib/supabase";
+import { friendlyError } from "@/lib/errors";
 import { SidebarNav, NavToggle, NavDrawer } from "@/app/components/Nav";
 
 type Record = {
@@ -71,7 +72,7 @@ export default function BaoVePage() {
       .order("created_at", { ascending: false });
 
     if (error) {
-      showToast("❌ Lỗi tải dữ liệu: " + error.message);
+      showToast("❌ Lỗi tải dữ liệu: " + friendlyError(error.message));
       return;
     }
     setRows((data as unknown as Record[]) || []);
